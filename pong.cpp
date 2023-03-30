@@ -12,7 +12,8 @@ class Paddle{
     public:
         int xpos;
         int ypos = GetScreenHeight() / 2;
-        int speed;
+        int speed = 5;
+        int score = 0;
 
         //Draws the paddle
         void draw(){
@@ -39,14 +40,15 @@ class Ball{
     public:
         double xpos;
         double ypos;
-        double direction;
-        double speed = 5;
+        double dx;
+        double dy;
     
         void generateNew(int screenwidth, int screenheight){
             std::srand(std::time(nullptr));
             xpos = screenwidth / 2;
             ypos = std::rand() % screenheight;
-            direction = std::rand() % (int)(2 * M_PI * 180.0 / M_PI);
+            dx = (rand() % 2 == 0) ? -5 : 5;
+            dy = (std::rand() % 1) - (std::rand() % 10);
         }
 
         void draw(){
@@ -54,17 +56,47 @@ class Ball{
         }
 
         void erase(double oldxpos, double oldypos){
-            DrawCircle(oldxpos, oldypos, 13, BLACK);
+            DrawCircle(oldxpos, oldypos, 17, BLACK);
         }
 
         void move(int screenwidth, int screenheight){
             erase(xpos, ypos);
             if (ypos >= screenheight || ypos <= 0){
-                double distance_to_wall = (abs(screenwidth - xpos) > xpos) ? xpos : abs(screenwidth - xpos);
-                direction = ((360.0 - direction) * (1.0 - distance_to_wall / screenwidth) + 180.0) * (distance_to_wall / screenwidth);
+                dy = 0 - dy;
             }
-            xpos += speed * sin(direction);
-            ypos += speed * cos(direction);
+            xpos += dx;
+            ypos += dy;
+        }
+
+        bool checkScore(Paddle& player, Paddle& computer){ //Take in paddle and handle score n stuff
+            if (xpos <= player.xpos){
+                if (player.ypos <= ypos && player.ypos + 50 >= ypos){
+                    dx = 0 - dx;
+                    dy += (std::rand() % 5) - (std::rand() % 5);
+                }
+                else {
+                    ClearBackground(BLACK);
+                    erase(xpos, ypos);
+                    computer.score += 1;
+                    std::cout << "\nCOMPUTER SCORE: " << computer.score;
+                    generateNew(GetScreenWidth(), GetScreenHeight());
+                }
+            }
+            if (xpos >= computer.xpos){
+                if (computer.ypos <= ypos && computer.ypos + 50 >= ypos){
+                    dx = 0 - dx;
+                    dy += (std::rand() % 5) - (std::rand() % 5);
+                }
+                else {
+                    ClearBackground(BLACK);
+                    //erase(xpos, ypos);
+                    //player.score += 1;
+                    //std::cout << "\nPLAYER SCORE: " << computer.score;
+                    //generateNew(GetScreenWidth(), GetScreenHeight());
+                    dx = 0 - dx;
+                    dy *= (std::rand() % 2); - (std::rand() % 2);
+                }
+            }
         }
 
 
@@ -94,6 +126,7 @@ int main()
     while (!WindowShouldClose())
     {
         ball.move(screenWidth, screenHeight);
+        ball.checkScore(player, computer);
 
         if (IsKeyDown(KEY_UP)){
             player.move(true);
